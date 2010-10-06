@@ -25,8 +25,6 @@ __all__ = [
     "DeletedError", "LoginError", "NotLoginError", "ExistsError", "MaxError"
     ]
 
-UA = "Megurine/1.0 (Vocanew; http://vocanew.naniyueni.org/)"
-
 LOGIN_BASE = "https://secure.nicovideo.jp/secure/"
 LOGIN_URL  = LOGIN_BASE + "login?site=niconico"
 LOGOUT_URL = LOGIN_BASE + "logout"
@@ -155,7 +153,6 @@ class NicoLogin:
 
     def __init__(self):
         self.opener = build_opener(HTTPCookieProcessor(CookieJar()))
-        self.opener.addheaders = [("User-Agent", UA)]
         orig_open = self.opener.open
 
         def retry_open(*args, **kwds):
