@@ -178,7 +178,7 @@ class NicoLogin:
 
     @classmethod
     def require(cls, f):
-        def _(cls, *args, **kwds):
+        def _(fn, cls, *args, **kwds):
             if not cls.islogin:
                 raise NotLoginError
 
