@@ -357,9 +357,9 @@ class Mylist(NicoLogin):
         Using existing login session if nicologin is NicoLogin instance.
         """
         super().__init__()
-        if nicologin:
+        if isinstance(nicologin, NicoLogin):
             self.opener = nicologin.opener
-            self.islogin = True
+            self.islogin = nicologin.islogin
 
         self._group_id = group_id
         self._oldurl  = ""
