@@ -12,7 +12,8 @@ from datetime import datetime
 from xml.etree import ElementTree
 from xml.sax.saxutils import unescape
 
-from urllib.parse import (urlencode, quote, parse_qs)
+from urllib.parse import (quote, parse_qs)
+from urllib.parse import urlencode as orig_urlencode
 from urllib.request import (build_opener, urlopen, HTTPCookieProcessor)
 from http.cookiejar import CookieJar
 from nicovideo.decorator import decorator # for pydoc
@@ -38,6 +39,9 @@ FEED_NS = "http://www.w3.org/2005/Atom"
 
 RETRY_WAIT  = 5 # sec
 RETRY_COUNT = 5
+
+def urlencode(*args, **kwargs):
+    return orig_urlencode(*args, **kwargs).encode('utf-8')
 
 def retry(fn, count, interval=3):
     while True:
@@ -446,7 +450,7 @@ class Mylist(NicoLogin):
         param = "&".join(["group_id=" + self._group_id,
                           "token=" + self._gettoken(MYLIST_URL["mylist"])] +
                           id_list)
-        res = self.opener.open(MYLIST_URL["remove"], param)
+        res = self.opener.open(MYLIST_URL["remove"], param.encode('utf-8'))
         self._raise_if_error(res)
         self._cachedlist = None
 
