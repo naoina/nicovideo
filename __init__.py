@@ -30,6 +30,7 @@ LOGIN_BASE = "https://secure.nicovideo.jp/secure/"
 LOGIN_URL  = LOGIN_BASE + "login?site=niconico"
 LOGOUT_URL = LOGIN_BASE + "logout"
 THUMB_URL  = "http://ext.nicovideo.jp/api/getthumbinfo/"
+I_NICOVIDEO_URL = "http://i.nicovideo.jp/v3/video.array?v="
 MAIN_URL   = "http://www.nicovideo.jp/"
 TAGSEARCH_URL  = MAIN_URL + "tag/{word}?page={page}&sort={sort}&order={order}&rss=atom"
 NEWARRIVAL_URL = MAIN_URL + "newarrival?page={page}&rss=atom"
@@ -54,6 +55,39 @@ def retry(fn, count, interval=3):
                 raise
 
             count -= 1
+
+
+class IVideo(object):
+    """Video information from i.nicovideo.jp API"""
+
+    def __init__(self, video_id):
+        f = retry(lambda: urlopen(I_NICOVIDEO_URL + video_id), RETRY_COUNT)
+        try:
+            self.parse(f)
+        except DeletedError as e:
+            raise DeletedError(" ".join((video_id, str(e))))
+
+    def parse(self, src):
+        info = ElementTree.parse(src).getroot()
+        count = info.find("count").text
+        if count.isdigit and int(count) == 0:
+            raise DeletedError("failed to get video info")
+        video_info = info.find("video_info")
+        for name in ("video", "thread"):
+            setattr(self, name, lambda: None)
+            for child in video_info.find(name).findall("*"):
+                value = child.text
+                if value and value.isdigit():
+                    value = int(value)
+                setattr(getattr(self, name), child.tag, value)
+        self.video.title = unescape(self.video.title, {'&quot;': '"'})
+        self.video.first_retrieve = datetime.strptime(
+            self.video.first_retrieve, "%Y-%m-%dT%H:%M:%S+09:00")
+        tags = Tags()
+        for tag in video_info.findall("tags/tag_info/tag"):
+            tags.append(Tag(tag.text, False))
+        self.tags = tags
+
 
 class Video:
     """Video information class."""
@@ -195,10 +229,11 @@ class NicoLogin:
 class Nicovideo(NicoLogin):
     """Handling the Nicovideo."""
 
-    def __init__(self):
+    def __init__(self, use_i_nicovideo_api=False):
         super().__init__()
         self._video = OrderedDict()
         self._mylist = {}
+        self._use_i_nicovideo_api = use_i_nicovideo_api
 
     def __contains__(self, video_id):
         return video_id in self._video
@@ -230,9 +265,15 @@ class Nicovideo(NicoLogin):
         if isinstance(video, Video):
             video_id = video.video_id
             v = video
+        elif isinstance(video, IVideo):
+            video_id = video.video.id
+            v = video
         else:
             video_id = video
-            v = Video(video_id)
+            if self._use_i_nicovideo_api:
+                v = IVideo(video_id)
+            else:
+                v = Video(video_id)
         self._video[video_id] = v
 
     def extend(self, nicovideo):
