@@ -75,6 +75,8 @@ class IVideo(object):
         if count.isdigit and int(count) == 0:
             raise DeletedError("failed to get video info")
         video_info = info.find("video_info")
+        if video_info.find("video/deleted").text != "0":
+            raise DeletedError("this video has been deleted")
         for name in ("video", "thread"):
             setattr(self, name, lambda: None)
             for child in video_info.find(name).findall("*"):
