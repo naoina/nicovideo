@@ -130,11 +130,10 @@ class Video:
         for e in element_text:
             elem = thumb.find(e)
             value = elem.text if hasattr(elem, "text") else ""
-
-            exec(r'self.{} = value'.format(e))
+            setattr(self, e, value)
 
         for e in element_int:
-            exec(r'self.{0} = int(thumb.find("{0}").text)'.format(e))
+            setattr(self, e, int(thumb.find(e).text))
 
         self.title = unescape(self.title, {'&quot;': '"'})
         self.first_retrieve = datetime.strptime(self.first_retrieve, "%Y-%m-%dT%H:%M:%S+09:00")
