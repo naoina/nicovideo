@@ -16,7 +16,7 @@ from urllib.parse import (quote, parse_qs)
 from urllib.parse import urlencode as orig_urlencode
 from urllib.request import (build_opener, urlopen, HTTPCookieProcessor)
 from http.cookiejar import CookieJar
-from nicovideo.decorator import decorator # for pydoc
+from nicovideo.decorator import decorator  # for pydoc
 
 __all__ = [
     # Classes
@@ -27,22 +27,24 @@ __all__ = [
     ]
 
 LOGIN_BASE = "https://secure.nicovideo.jp/secure/"
-LOGIN_URL  = LOGIN_BASE + "login?site=niconico"
+LOGIN_URL = LOGIN_BASE + "login?site=niconico"
 LOGOUT_URL = LOGIN_BASE + "logout"
-THUMB_URL  = "http://ext.nicovideo.jp/api/getthumbinfo/"
+THUMB_URL = "http://ext.nicovideo.jp/api/getthumbinfo/"
 I_NICOVIDEO_URL = "http://i.nicovideo.jp/v3/video.array?v="
-MAIN_URL   = "http://www.nicovideo.jp/"
-TAGSEARCH_URL  = MAIN_URL + "tag/{word}?page={page}&sort={sort}&order={order}&rss=atom"
+MAIN_URL = "http://www.nicovideo.jp/"
+TAGSEARCH_URL = MAIN_URL + "tag/{word}?page={page}&sort={sort}&order={order}&rss=atom"
 NEWARRIVAL_URL = MAIN_URL + "newarrival?page={page}&rss=atom"
 WATCH_URL = MAIN_URL + "watch/{video_id}"
-GETVIDEO_URL   = MAIN_URL + "api/getflv?v={video_id}&as3=1"
+GETVIDEO_URL = MAIN_URL + "api/getflv?v={video_id}&as3=1"
 FEED_NS = "http://www.w3.org/2005/Atom"
 
-RETRY_WAIT  = 5 # sec
+RETRY_WAIT = 5  # sec
 RETRY_COUNT = 5
+
 
 def urlencode(*args, **kwargs):
     return orig_urlencode(*args, **kwargs).encode('utf-8')
+
 
 def retry(fn, count, interval=3):
     while True:
@@ -116,14 +118,14 @@ class Video:
         thumb = thumbinfo.find("thumb")
 
         element_text = [
-                "video_id", "title", "description", "thumbnail_url", "first_retrieve",
-                "length", "movie_type", "last_res_body", "watch_url", "thumb_type",
-                "embeddable", "no_live_play", "user_id"
-                ]
+            "video_id", "title", "description", "thumbnail_url", "first_retrieve",
+            "length", "movie_type", "last_res_body", "watch_url", "thumb_type",
+            "embeddable", "no_live_play", "user_id",
+            ]
 
         element_int = [
-                "size_high", "size_low", "view_counter", "comment_num", "mylist_counter"
-                ]
+            "size_high", "size_low", "view_counter", "comment_num", "mylist_counter",
+            ]
 
         for e in element_text:
             elem = thumb.find(e)
@@ -139,7 +141,7 @@ class Video:
         self.embeddable = self.embeddable == "1"
 
         l = self.length.split(":")
-        self.length = int(l[0]) * 60 + int(l[1]) # convert to seconds.
+        self.length = int(l[0]) * 60 + int(l[1])  # convert to seconds.
 
         self._parsetag(thumb)
 
@@ -150,6 +152,7 @@ class Video:
             for tag in [t for t in tags if hasattr(t, "text")]:
                 self.tags.append(Tag(tag.text, tag.get("lock")))
 
+
 class Tags(list):
     def __iter__(self):
         for tag in super().__iter__():
@@ -158,22 +161,34 @@ class Tags(list):
     def __contains__(self, item):
         return item in [t.tag for t in super().__iter__()]
 
+
 class Tag:
     def __init__(self, tag, islock):
         self.tag = tag
         self.islock = bool(islock)
 
+
 class ErrorBase(Exception):
     def __str__(self):
         return str(self._msg)
+
 
 class DeletedError(ErrorBase):
     def __init__(self, msg):
         self._msg = msg
 
-class LoginError(ErrorBase):    _msg = "login incorrect"
-class NotLoginError(ErrorBase): _msg = "not logged in"
-class OverAccessError(ErrorBase): _msg = "access overload"
+
+class LoginError(ErrorBase):
+    _msg = "login incorrect"
+
+
+class NotLoginError(ErrorBase):
+    _msg = "not logged in"
+
+
+class OverAccessError(ErrorBase):
+    _msg = "access overload"
+
 
 # The sort order of tag search.
 class TagSort:
@@ -182,7 +197,8 @@ class TagSort:
     COMMENTTIME = ""
     COMMENTNUM = "r"
     MYLIST = "m"
-    TIME   = "l"
+    TIME = "l"
+
 
 class NicoLogin:
     """Common login session class."""
@@ -223,6 +239,7 @@ class NicoLogin:
             return f(cls, *args, **kwds)
         return decorator(_, f)
 
+
 ################################################################################
 ### Nicovideo SECTION
 ################################################################################
@@ -260,7 +277,7 @@ class Nicovideo(NicoLogin):
     def __del__(self):
         self.logout()
 
-    def append(self, video: str):
+    def append(self, video):
         """Append video information."""
         if isinstance(video, Video):
             video_id = video.video_id
@@ -281,7 +298,7 @@ class Nicovideo(NicoLogin):
         for v in nicovideo:
             self.append(v)
 
-    def pop(self, last=True) -> Video:
+    def pop(self, last=True):
         """return and remove a Video instance.
         Video instance are returned in LIFO order if last is true or FIFO order
         if false.
@@ -301,7 +318,7 @@ class Nicovideo(NicoLogin):
         """Download video.
         Raises NotLoginError if not logged in.
         """
-        self.opener.open(WATCH_URL.format(video_id=video_id)) # Set referer
+        self.opener.open(WATCH_URL.format(video_id=video_id))  # Set referer
 
         s = self.opener.open(GETVIDEO_URL.format(video_id=video_id)).read().decode()
         f = self.opener.open(parse_qs(s)["url"][0])
@@ -350,8 +367,10 @@ class Nicovideo(NicoLogin):
         gen = lambda s, sep: quote(s) if isinstance(s, str) else sep.join(map(quote, s))
         keyword = []
 
-        if andkey: keyword.append(gen(andkey, " "))
-        if orkey: keyword.append(gen(orkey, "+or+"))
+        if andkey:
+            keyword.append(gen(andkey, " "))
+        if orkey:
+            keyword.append(gen(orkey, "+or+"))
 
         fmt = {
             "word": " ".join(keyword),
@@ -385,13 +404,19 @@ class Nicovideo(NicoLogin):
 MYLIST_URL = {
     "mylist": MAIN_URL + "my/mylist",
     "mylist_add": MAIN_URL + "mylist_add/video/{video_id}",
-    "add":  MAIN_URL + "api/mylist/add",
+    "add": MAIN_URL + "api/mylist/add",
     "remove": MAIN_URL + "api/mylist/delete",
     "list": MAIN_URL + "api/mylist/list",
 }
 
-class ExistsError(ErrorBase): _msg = "already registered"
-class MaxError(ErrorBase): _msg = "registration upper limit"
+
+class ExistsError(ErrorBase):
+    _msg = "already registered"
+
+
+class MaxError(ErrorBase):
+    _msg = "registration upper limit"
+
 
 class Mylist(NicoLogin):
     """Handling the mylist of Nicovideo"""
@@ -407,7 +432,7 @@ class Mylist(NicoLogin):
             self.islogin = nicologin.islogin
 
         self._group_id = group_id
-        self._oldurl  = ""
+        self._oldurl = ""
         self._oldhtml = ""
         self._cachedlist = None
 
@@ -488,9 +513,9 @@ class Mylist(NicoLogin):
 
         id_list = ["id_list[{}][]={}".format(t["item_type"],
             quote(str(t["item_id"]))) for t in targets]
-        param = "&".join(["group_id=" + self._group_id,
-                          "token=" + self._gettoken(MYLIST_URL["mylist"])] +
-                          id_list)
+        param = "&".join([
+            "group_id=" + self._group_id,
+            "token=" + self._gettoken(MYLIST_URL["mylist"])] + id_list)
         res = self.opener.open(MYLIST_URL["remove"], param.encode('utf-8'))
         self._raise_if_error(res)
         self._cachedlist = None
