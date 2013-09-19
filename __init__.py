@@ -273,9 +273,6 @@ class Nicovideo(NicoLogin):
 
         return tmp
 
-    def __del__(self):
-        self.logout()
-
     def append(self, video):
         """Append video information."""
         if isinstance(video, Video):
