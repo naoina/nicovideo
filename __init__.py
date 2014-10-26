@@ -1,4 +1,4 @@
-"""Nicovideo(http://www.nicovideo.jp/) handling library for Python3.x."""
+"""A library for Nicovideo(http://www.nicovideo.jp/)"""
 
 __author__ = "Naoya Inada <naoina@kuune.org>"
 
