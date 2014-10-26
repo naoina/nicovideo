@@ -1,6 +1,6 @@
 """Nicovideo(http://www.nicovideo.jp/) handling library for Python3.x."""
 
-__author__ = "Naoya Inada <naoina@naniyueni.org>"
+__author__ = "Naoya Inada <naoina@kuune.org>"
 
 import os.path
 import re
