@@ -548,7 +548,7 @@ class Mylist(NicoLogin):
         return self._scrape_mylist(url, pat)
 
     def _gettoken(self, url):
-        return self._scrape_mylist(url, r'NicoAPI\.token\s*=\s*"(.*)"')
+        return self._scrape_mylist(url, r'''NicoAPI\.token\s*=\s*['"](.*)['"]''')
 
     def _scrape_mylist(self, url, pat):
         html = self._gethtml(url)
